@@ -118,6 +118,7 @@ export default function Settings({ status, setStatus, toast }: Props) {
   const [input, setInput] = useState(status.audio.inputDevice);
   const [output, setOutput] = useState(status.audio.outputDevice);
   const [showAll, setShowAll] = useState(false);
+  const [manual, setManual] = useState(false);
 
   const loadDevices = async (rescan = false) => {
     if (rescan) setRefreshing(true);
@@ -161,6 +162,15 @@ export default function Settings({ status, setStatus, toast }: Props) {
 
   const changed = devices && (input !== devices.selected.input || output !== devices.selected.output);
   const cableIn = devices?.inputs.find((d) => d.id === input)?.isCable;
+  // Auto-pick (CABLE in, system default out) covers most setups; only show the pickers when asked or something looks off.
+  const needsAttention = !!devices && (devices.warnings.length > 0 || !devices.inputs.find((d) => d.id === devices.selected.input)?.isCable);
+  const showPickers = manual || needsAttention;
+  const inName = devices?.inputs.find((d) => d.id === devices.selected.input)?.name ?? "未选择";
+  const outName = !devices
+    ? ""
+    : devices.selected.output === -2
+      ? `跟随系统默认（${devices.systemDefaultOutput ?? "未知"}）`
+      : devices.outputs.find((d) => d.id === devices.selected.output)?.name ?? "未选择";
 
   return (
     <div className="page">
@@ -180,6 +190,20 @@ export default function Settings({ status, setStatus, toast }: Props) {
         </div>
         {!devices ? (
           <p className="muted">读取设备中…</p>
+        ) : !showPickers ? (
+          <>
+            <p className="small">
+              输入：{inName}
+              <br />
+              输出：{outName}
+            </p>
+            <p className="muted small">
+              已自动选好，一般无需改动。
+              <button className="link" onClick={() => setManual(true)}>
+                手动选择设备
+              </button>
+            </p>
+          </>
         ) : (
           <>
             {devices.warnings.map((w) => (
@@ -215,9 +239,16 @@ export default function Settings({ status, setStatus, toast }: Props) {
               <label className="inline">
                 <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> 显示所有接口（MME、DirectSound…）
               </label>
-              <button onClick={applyDevices} disabled={!changed}>
-                应用
-              </button>
+              <span className="row" style={{ gap: 8 }}>
+                {manual && !needsAttention && (
+                  <button className="ghost" onClick={() => { setManual(false); setInput(devices.selected.input); setOutput(devices.selected.output); }}>
+                    收起
+                  </button>
+                )}
+                <button onClick={applyDevices} disabled={!changed}>
+                  应用
+                </button>
+              </span>
             </div>
           </>
         )}
