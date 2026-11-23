@@ -153,7 +153,7 @@ export default function Voices({ status, refreshStatus, toast }: Props) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const model = form.get("model") as File | null;
-    if (!model || !model.name) return err("请选择模型文件（.pth）");
+    if (!model || !model.name) return err("请选择模型文件（.pth / .safetensors / .onnx）");
     const idx = form.get("index") as File | null;
     if (idx && !idx.name) form.delete("index");
     if (!form.get("name")) form.set("name", model.name.replace(/\.(pth|safetensors|onnx)$/i, ""));

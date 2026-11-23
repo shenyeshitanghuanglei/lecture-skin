@@ -274,7 +274,7 @@ export default function OnboardingModal({ status, toast, goto, onFinish, onClose
                       )}
                     </div>
                     <p className="muted small" style={{ margin: "4px 0 8px" }}>
-                      进入「声音库」选择本地 RVC 模型（<code>.pth</code>，可附带 <code>.index</code>），导入后点「使用」。
+                      进入「声音库」选择本地 RVC 模型（<code>.pth</code> / <code>.safetensors</code> / <code>.onnx</code>，可附带 <code>.index</code>），导入后点「使用」。
                     </p>
                     <button className="ghost small-btn" onClick={() => jumpTo("voices")}>
                       去声音库
