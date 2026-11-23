@@ -1,0 +1,51 @@
+[project]
+name = "voice-translater"
+version = "0.1.0b1"
+description = "Real-time voice changer for browser lectures (based on deiteris/voice-changer, MIT)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # GPU stack: CUDA 12.8 build is required for RTX 50 (Blackwell, sm_120)
+    "torch>=2.7.1",
+    "torchaudio>=2.7.1",
+    "faiss-cpu",
+    "onnxscript",
+    "onnxsim",
+    # 1.23+ wheels target CUDA 13; torch cu128 ships CUDA 12 DLLs, so stay on a CUDA 12 build
+    "onnxruntime-gpu==1.22.0",
+    "torchcrepe",
+    "torchfcpe",
+    "safetensors",
+    # server/requirements-common.txt
+    "msvc-runtime>=14.38; sys_platform=='win32'",
+    "uvicorn",
+    "pyOpenSSL",
+    "numpy<2",
+    "python-socketio",
+    "fastapi",
+    "python-multipart",
+    "scipy",
+    "librosa",
+    "sounddevice<0.5.0",
+    "python-dotenv",
+    "pydantic-settings",
+    "xxhash",
+    "aiohttp",
+    "certifi",
+    "msgspec",
+    "pywebview>=6.2.1",
+    "av>=19.0.2",
+    "demucs>=4.0.1",
+    "soundfile>=0.14.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchaudio = { index = "pytorch-cu128" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true

@@ -1,0 +1,50 @@
+# Python env / caches
+.venv/
+__pycache__/
+*.pyc
+
+# Local credentials and configuration
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+*.p12
+
+# Local voice models, recordings and training data
+/models/
+/data/
+*.pth
+*.pt
+*.index
+*.onnx
+*.safetensors
+*.ckpt
+*.wav
+*.mp3
+*.flac
+*.m4a
+*.aac
+*.ogg
+*.opus
+*.webm
+*.mp4
+*.mkv
+*.flv
+*.mov
+*.aif
+*.aiff
+
+# Runtime state written by the voice changer server
+*.log
+vendor/voice-changer/server/assets.json
+vendor/voice-changer/server/stored_setting*.json
+vendor/voice-changer/server/tmp_dir/
+vendor/voice-changer/server/upload_dir/
+vendor/voice-changer/server/model_dir/
+vendor/voice-changer/server/pretrain/
+vendor/voice-changer/server/vt_devices.json*
+logs/
+panel/node_modules/
+11_*/
