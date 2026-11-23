@@ -307,6 +307,25 @@ class BootControls:
     def open_anyway(self) -> None:
         self._pick("open_anyway")
 
+    def export_diagnostics(self) -> str:
+        """Zip logs + system info for a bug report and show it in Explorer."""
+        import diagnostics
+        extra = {}
+        if server_alive():
+            for name, path in (("status", "/vt/api/status"), ("stacks", "/vt/api/debug/stacks")):
+                try:
+                    with _LOCAL.open(f"{BASE}{path}", timeout=5) as r:
+                        extra[name] = json.loads(r.read())
+                except Exception as e:
+                    extra[name] = f"<{type(e).__name__}: {e}>"
+        try:
+            path = diagnostics.build_bundle(extra)
+        except Exception as e:
+            _log(f"diagnostics export failed: {e!r}")
+            return ""
+        diagnostics.reveal(path)
+        return str(path)
+
     def reset(self) -> None:
         self._choice = None
         self._event.clear()
@@ -329,7 +348,20 @@ def _log(msg: str) -> None:
         pass
 
 
+def _install_crash_logging() -> None:
+    """pythonw has no console, so an uncaught error would vanish; write it to desktop.log."""
+    import traceback
+
+    def log_exc(exc_type, exc, tb, where="main"):
+        _log(f"uncaught error in {where}:\n" + "".join(traceback.format_exception(exc_type, exc, tb)).rstrip())
+
+    sys.excepthook = log_exc
+    threading.excepthook = lambda a: log_exc(a.exc_type, a.exc_value, a.exc_traceback,
+                                             a.thread.name if a.thread else "thread")
+
+
 def main() -> None:
+    _install_crash_logging()
     mutex = _acquire_single_instance()
     if mutex is None:
         return
@@ -377,7 +409,8 @@ def main() -> None:
             if not server.wait_ready():
                 if server._closing:
                     return
-                status("变声服务启动失败", f"详情见 {server.LOG}", warn=True, buttons=[["重试", "retry"]])
+                status("变声服务启动失败", f"详情见 {server.LOG}。反馈问题时请附上诊断信息。", warn=True,
+                       buttons=[["重试", "retry"], ["导出诊断信息", "export_diagnostics"]])
             else:
                 reason = model_load_failure(server.run_log())
                 if reason is None:
@@ -392,7 +425,8 @@ def main() -> None:
                 else:
                     detail = f"声音模型没有加载上，现在打开面板也无法变声。详情见 {server.LOG}"
                 status("声音模型加载失败", detail, warn=True,
-                       buttons=[["重试", "retry"], ["仍然打开面板", "open_anyway"]])
+                       buttons=[["重试", "retry"], ["仍然打开面板", "open_anyway"],
+                                ["导出诊断信息", "export_diagnostics"]])
             controls.reset()
             choice = None
             while choice is None and not server._closing:

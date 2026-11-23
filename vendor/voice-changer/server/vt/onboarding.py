@@ -18,6 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 ALLOWED_URLS: dict[str, str] = {
     "vb_cable": "https://vb-audio.com/Cable/",
+    "report_issue": "https://github.com/shenyeshitanghuanglei/lecture-skin/issues/new?template=bug_report.yml",
 }
 
 UV_INSTALL_URL = "https://astral.sh/uv/install.ps1"

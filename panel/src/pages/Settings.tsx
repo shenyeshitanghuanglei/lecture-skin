@@ -14,6 +14,41 @@ const PRESET_HINT: Record<string, string> = {
   stable: "约 170ms 一块，最不容易卡",
 };
 
+function DiagnosticsCard({ toast }: { toast: Props["toast"] }) {
+  const [busy, setBusy] = useState(false);
+  const [file, setFile] = useState<string | null>(null);
+  const err = (m: string) => toast(m, true);
+
+  const exportBundle = async () => {
+    setBusy(true);
+    const r = await attempt(api.exportDiagnostics, err);
+    setBusy(false);
+    if (r) {
+      setFile(r.path);
+      toast("诊断信息已导出，已在文件夹中选中");
+    }
+  };
+
+  return (
+    <section className="card">
+      <h3>问题反馈</h3>
+      <p className="muted small">
+        遇到问题时，先导出诊断信息，再到反馈页描述问题并附上这个 zip。诊断包含版本、显卡和内存、日志和设置，
+        用户名已隐去，不含录音或声音模型。
+      </p>
+      <div className="row" style={{ gap: 8, justifyContent: "flex-start" }}>
+        <button onClick={exportBundle} disabled={busy}>
+          {busy ? "正在导出…" : "导出诊断信息"}
+        </button>
+        <button className="ghost" onClick={() => attempt(() => api.openOnboardingUrl("report_issue"), err)}>
+          打开反馈页
+        </button>
+      </div>
+      {file && <p className="muted small">已保存：{file}</p>}
+    </section>
+  );
+}
+
 /** Drag-safe throttled range slider: keeps local thumb state while dragging (with PointerCapture
  *  so releasing outside the track never gets stuck), eliminating HTTP poll rubber-banding. */
 export function SmoothSlider({
@@ -290,6 +325,8 @@ export default function Settings({ status, setStatus, toast }: Props) {
         </select>
         <p className="muted small">切换显卡会重新加载模型，需要几秒钟。</p>
       </section>
+
+      <DiagnosticsCard toast={toast} />
     </div>
   );
 }

@@ -138,6 +138,7 @@ class VtApi:
         r.add_api_route("/onboarding/ensure-env", self.onboarding_ensure_env, methods=["POST"])
         r.add_api_route("/onboarding/open-url", self.onboarding_open_url, methods=["POST"])
         r.add_api_route("/debug/stacks", self.debug_stacks, methods=["GET"])
+        r.add_api_route("/diagnostics", self.export_diagnostics, methods=["POST"])
 
     # ---------- helpers ----------
     PROTECT_DEFAULT = 0.33
@@ -566,6 +567,37 @@ class VtApi:
         import threading, traceback
         names = {t.ident: t.name for t in threading.enumerate()}
         return {f"{names.get(i, '?')} ({i})": "".join(traceback.format_stack(f)) for i, f in sys._current_frames().items()}
+
+    def export_diagnostics(self, reveal: bool = True):
+        """Zip logs, settings and live state for a bug report; show it in Explorer."""
+        app_dir = str(PROJECT_ROOT / "app")
+        if app_dir not in sys.path:
+            sys.path.append(app_dir)
+        import diagnostics
+
+        def devices_if_free():
+            # Don't let a stuck audio thread block the very export meant to diagnose it.
+            if not self._audio_lock.acquire(timeout=3):
+                return "<audio lock busy>"
+            try:
+                return self._devices()
+            finally:
+                self._audio_lock.release()
+
+        extra: dict[str, Any] = {}
+        for name, fn in (("status", self.status), ("devices", devices_if_free), ("stacks", self.debug_stacks)):
+            try:
+                extra[name] = fn()
+            except Exception as e:
+                extra[name] = f"<{type(e).__name__}: {e}>"
+        try:
+            path = diagnostics.build_bundle(extra)
+        except Exception as e:
+            logger.exception("diagnostics export failed")
+            raise HTTPException(500, f"导出诊断信息失败：{e}") from e
+        if reveal:
+            diagnostics.reveal(path)
+        return {"ok": True, "path": str(path), "fileName": path.name}
 
     # ---------- desktop helpers ----------
     def open_sound_settings(self, page: str = "apps-volume"):

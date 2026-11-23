@@ -151,6 +151,7 @@ export const api = {
   onboardingEnv: (refresh = false) =>
     request<OnboardingEnv>("GET", `/onboarding/env${refresh ? "?refresh=true" : ""}`),
   ensureOnboardingEnv: () => request<OnboardingEnv>("POST", "/onboarding/ensure-env"),
-  openOnboardingUrl: (target: "vb_cable") =>
+  openOnboardingUrl: (target: "vb_cable" | "report_issue") =>
     request<{ ok: boolean; url: string }>("POST", "/onboarding/open-url", { target }),
+  exportDiagnostics: () => request<{ ok: boolean; path: string; fileName: string }>("POST", "/diagnostics", undefined, 60000),
 };

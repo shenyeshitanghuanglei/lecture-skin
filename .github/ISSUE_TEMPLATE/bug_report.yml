@@ -1,0 +1,56 @@
+name: 问题反馈
+description: 软件出错、没声音、卡顿、启动失败等
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！先在面板「设置 → 问题反馈」里点 **导出诊断信息**，把生成的 zip 拖进下面的“诊断信息”框。
+        如果面板打不开，启动失败的页面上也有「导出诊断信息」按钮。
+  - type: input
+    id: version
+    attributes:
+      label: 版本
+      description: 下载的版本号，例如 v0.1.0-beta.1
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 出了什么问题
+      description: 你看到了什么，和你期望的有什么不同。有报错提示的话请截图。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 怎么重现
+      description: 从打开软件开始，一步步做了什么。
+      placeholder: |
+        1. 打开声音面板
+        2. 选择声音“xxx”，点开始
+        3. 在 xx 软件里说话，对方听到……
+    validations:
+      required: true
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: 出现频率
+      options:
+        - 每次都会
+        - 有时会
+        - 只出现过一次
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: 诊断信息
+      description: 把「导出诊断信息」生成的 zip 拖到这里。
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: 其他补充
+      description: 在用什么软件（QQ、腾讯会议、OBS…）、耳机/麦克风型号等。
