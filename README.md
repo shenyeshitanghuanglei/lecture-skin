@@ -1,6 +1,6 @@
 # lecture-skin · 给网课换声音皮肤
 
-**v0.1.0-beta.1** · 面向 Windows 10/11 x64 + NVIDIA 用户的非商用源码试用版。请自备有权使用的 RVC 声音模型。
+**v0.1.0-beta.2** · 面向 Windows 10/11 x64 + NVIDIA 用户的非商用源码试用版。请自备有权使用的 RVC 声音模型。
 
 在 Windows 上看网课时，用本机 RVC 模型实时转换浏览器播放的声音。延迟取决于显卡、声音模型和缓冲设置。
 
@@ -117,7 +117,7 @@ $env:VT_ENABLE_CLONE = 'true'
 
 ### 依赖的模型与库
 
-- [ContentVec](https://github.com/auspicious3000/contentvec)：语音内容特征提取
+- [ContentVec](https://github.com/auspicious3000/contentvec)：语音内容特征提取。首次启动时从 [wok000/weights_gpl](https://huggingface.co/wok000/weights_gpl) 下载的 `contentvec-f.onnx` 按 GPL 条款提供，本仓库不包含该文件，使用时以其发布页条款为准
 - [RMVPE](https://github.com/Dream-High/RMVPE)、[FCPE / torchfcpe](https://github.com/CNChTu/FCPE)、[torchcrepe](https://github.com/maxrmorrison/torchcrepe)：音高提取
 - [PyTorch](https://pytorch.org/)、[ONNX Runtime](https://onnxruntime.ai/)、[faiss](https://github.com/facebookresearch/faiss)、[librosa](https://github.com/librosa/librosa)、[FastAPI](https://fastapi.tiangolo.com/)、[sounddevice](https://github.com/spatialaudio/python-sounddevice)
 - [Demucs](https://github.com/facebookresearch/demucs)（htdemucs）：声音克隆时分离人声；[PyAV](https://github.com/PyAV-Org/PyAV)：解码音频 / 视频

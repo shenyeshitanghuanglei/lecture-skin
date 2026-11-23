@@ -1,6 +1,6 @@
 [project]
 name = "voice-translater"
-version = "0.1.0b1"
+version = "0.1.0b2"
 description = "Real-time voice changer for browser lectures (based on deiteris/voice-changer, MIT)"
 requires-python = ">=3.12,<3.13"
 dependencies = [

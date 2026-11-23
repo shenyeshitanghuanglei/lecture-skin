@@ -1939,7 +1939,7 @@ wheels = [
 
 [[package]]
 name = "voice-translater"
-version = "0.1.0b1"
+version = "0.1.0b2"
 source = { virtual = "." }
 dependencies = [
     { name = "aiohttp" },
