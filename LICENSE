@@ -1,17 +1,21 @@
-lecture-skin 非商用许可
+MIT License
 
-版权所有 (c) 2026 lecture-skin 贡献者
+Copyright (c) 2026 lecture-skin contributors
 
-本许可仅适用于 lecture-skin 权利人有权以本条款授权的项目代码。
-第三方代码及其版权声明继续适用原许可证，详见 README.md 和
-vendor/voice-changer/LICENSE。声音模型、音频和其他第三方素材适用其各自条款。
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-在保留适用的版权声明和许可证的条件下，你可以下载、复制、运行和在本地修改
-本许可覆盖的代码，供个人非商业使用。GitHub 服务条款允许的平台内活动，包括
-GitHub 自带的 Fork 功能，继续适用该平台条款。
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-将本许可覆盖的代码或其修改版独立再分发、发布安装包或用于商业目的，需要
-事先取得相应权利人的许可。商业目的包括将代码用于有偿产品、服务或交付。
-
-代码按现状提供。在适用法律允许的范围内，权利人不就适销性、特定用途适用性
-或不侵权提供保证，也不对因使用代码而产生的损失承担责任。
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

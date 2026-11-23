@@ -1,6 +1,6 @@
 # lecture-skin · 给网课换声音皮肤
 
-**v0.1.0-beta.2** · 面向 Windows 10/11 x64 + NVIDIA 用户的非商用源码试用版。请自备有权使用的 RVC 声音模型。
+**v0.1.0-beta.2** · 面向 Windows 10/11 x64 + NVIDIA 用户的开源试用版（MIT 许可）。请自备有权使用的 RVC 声音模型。
 
 在 Windows 上看网课时，用本机 RVC 模型实时转换浏览器播放的声音。延迟取决于显卡、声音模型和缓冲设置。
 
@@ -28,7 +28,7 @@
 
 - **ZIP**：在 [GitHub 仓库](https://github.com/shenyeshitanghuanglei/lecture-skin) 点 **Code → Download ZIP**，先解压完成，再打开解压后的目录。
 - **Clone**：已有 Git 时，在 PowerShell 里运行下面两条命令。
-- **Fork**：在 GitHub 点 **Fork**，然后在你的 Fork 里复制 **Code → HTTPS** 地址，替换下面的克隆地址。改造和发布边界见 [LICENSE](LICENSE)。
+- **Fork**：在 GitHub 点 **Fork**，然后在你的 Fork 里复制 **Code → HTTPS** 地址，替换下面的克隆地址。欢迎基于本项目二次开发，许可条款见 [LICENSE](LICENSE)。
 
 ```powershell
 git clone https://github.com/shenyeshitanghuanglei/lecture-skin.git
@@ -126,4 +126,6 @@ $env:VT_ENABLE_CLONE = 'true'
 
 ## 许可证
 
-项目自有代码按根目录 [LICENSE](LICENSE) 提供，允许个人非商业使用和本地修改。GitHub Fork 按平台条款进行，商用或独立再分发需另行授权。上游及第三方代码保留原许可证和版权声明，见上方致谢和 [vendor/voice-changer/LICENSE](vendor/voice-changer/LICENSE)。
+项目代码按 [MIT 许可证](LICENSE) 开源：任何人都可以 Fork、修改、再发布和用于商业用途，只需在副本中保留版权声明和许可证文本。上游及第三方代码保留原许可证和版权声明，见上方致谢和 [vendor/voice-changer/LICENSE](vendor/voice-changer/LICENSE)。
+
+MIT 许可只覆盖代码。运行时下载的权重（例如按 GPL 条款提供的 `contentvec-f.onnx`）和你导入的声音模型适用各自的条款；基于本项目再发布时，请同样核实这些文件的授权。
