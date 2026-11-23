@@ -37,8 +37,29 @@ body{margin:0;height:100vh;display:grid;place-items:center;font:15px "Microsoft 
 background:#f4f5f8;color:#1c1f26}@media(prefers-color-scheme:dark){body{background:#111318;color:#e7e9ee}}
 .b{text-align:center}.d{width:38px;height:38px;border:4px solid #8b7dff55;border-top-color:#6d5dfc;border-radius:50%;
 margin:0 auto 18px;animation:s 1s linear infinite}@keyframes s{to{transform:rotate(360deg)}}
-small{opacity:.6}</style></head><body><div class="b"><div class="d"></div>
-<div id="t">正在启动变声服务…</div><small>首次启动约需 10–30 秒</small></div></body></html>"""
+small{opacity:.6;display:block;max-width:520px;margin:0 auto;line-height:1.6}
+.d.x{animation:none;border-color:#e0a23a;}#k{margin-top:18px}#k:empty{display:none}
+button{font:inherit;margin:0 6px;padding:7px 18px;border-radius:8px;border:1px solid #6d5dfc;cursor:pointer;
+background:#6d5dfc;color:#fff}button.g{background:transparent;color:inherit;border-color:#8888}
+</style></head><body><div class="b"><div class="d" id="d"></div>
+<div id="t">正在启动变声服务…</div><small id="s">通常需要 20–40 秒，开机后首次打开会更久</small><div id="k"></div></div>
+<script>
+function vtStatus(title, detail, warn, buttons){
+  document.getElementById('t').textContent = title;
+  document.getElementById('s').textContent = detail || '';
+  document.getElementById('d').className = warn ? 'd x' : 'd';
+  var k = document.getElementById('k'); k.innerHTML = '';
+  (buttons || []).forEach(function(b, i){
+    var e = document.createElement('button'); e.textContent = b[0]; if (i) e.className = 'g';
+    e.onclick = function(){ window.pywebview.api[b[1]](); }; k.appendChild(e);
+  });
+}
+</script></body></html>"""
+
+# The server (torch + CUDA + models) commits roughly 6 GB. Starting it with less free
+# commit (RAM + page file) makes it crawl and then fail to load the model (MemoryError).
+SERVER_COMMIT_GB = 6.0
+MODEL_FAIL_MARK = "Failed to create pipeline"
 
 
 def _acquire_single_instance() -> object | None:
@@ -57,6 +78,37 @@ def _acquire_single_instance() -> object | None:
             kernel32.CloseHandle(mutex)
         return None
     return mutex
+
+
+class _MemoryStatusEx(ctypes.Structure):
+    _fields_ = [
+        ("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
+        ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
+        ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
+        ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong),
+        ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+    ]
+
+
+def free_commit_gb() -> float | None:
+    """Commit memory still available (physical RAM + page file), in GB; None if unknown."""
+    if sys.platform != "win32":
+        return None
+    st = _MemoryStatusEx()
+    st.dwLength = ctypes.sizeof(st)
+    if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(st)):
+        return None
+    return st.ullAvailPageFile / 1024**3
+
+
+def model_load_failure(log_text: str) -> str | None:
+    """Why the voice model failed to load, judged from this run's server log; None if it loaded."""
+    if MODEL_FAIL_MARK not in log_text:
+        return None
+    tail = log_text[log_text.index(MODEL_FAIL_MARK):]
+    if "MemoryError" in tail or "out of memory" in tail.lower():
+        return "memory"
+    return "other"
 
 
 def server_alive() -> bool:
@@ -81,6 +133,9 @@ class Server:
         self.proc: subprocess.Popen | None = None
         self._closing = False
         self._lock = threading.Lock()
+        self._log_offset: int | None = None  # where this run's output starts in the log
+
+    LOG = LOG_DIR / "server-console.log"
 
     def ensure_running(self) -> None:
         with self._lock:
@@ -89,7 +144,8 @@ class Server:
             LOG_DIR.mkdir(exist_ok=True)
             python = ROOT / ".venv" / "Scripts" / "python.exe"
             flags = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
-            with open(LOG_DIR / "server-console.log", "ab") as log:
+            self._log_offset = self.LOG.stat().st_size if self.LOG.exists() else 0
+            with open(self.LOG, "ab") as log:
                 self.proc = subprocess.Popen(
                     [str(python), "main.py"], cwd=SERVER_DIR, stdout=log, stderr=subprocess.STDOUT, creationflags=flags
                 )
@@ -113,10 +169,24 @@ class Server:
             if self.proc is not None and self.proc.poll() is not None and not server_alive():
                 self.ensure_running()
 
+    def run_log(self) -> str:
+        """Server output of the run we started ('' if we didn't start it)."""
+        if self._log_offset is None:
+            return ""
+        try:
+            with open(self.LOG, "rb") as f:
+                f.seek(self._log_offset)
+                return f.read().decode("utf-8", errors="replace")
+        except OSError:
+            return ""
+
     def shutdown(self) -> None:
         """Closing the panel ends *every* voice server, including one left over from an
         earlier session or started by start.ps1, so nothing keeps running in the background."""
         self._closing = True
+        self.stop()
+
+    def stop(self) -> None:
         post("/vt/api/stop", timeout=2.5)
         with self._lock:
             pids = set(_listening_pids(PORT))
@@ -217,6 +287,39 @@ class SystemOutput:
             _log(f"could not restore default output: {e}")
 
 
+class BootControls:
+    """Buttons on the splash screen (exposed to JS as window.pywebview.api)."""
+
+    def __init__(self) -> None:
+        self._event = threading.Event()
+        self._choice: str | None = None
+
+    def _pick(self, choice: str) -> None:
+        self._choice = choice
+        self._event.set()
+
+    def start_anyway(self) -> None:
+        self._pick("start_anyway")
+
+    def retry(self) -> None:
+        self._pick("retry")
+
+    def open_anyway(self) -> None:
+        self._pick("open_anyway")
+
+    def reset(self) -> None:
+        self._choice = None
+        self._event.clear()
+
+    def wait(self, timeout: float) -> str | None:
+        """The button pressed within `timeout` seconds, else None."""
+        if self._event.wait(timeout):
+            choice, self._choice = self._choice, None
+            self._event.clear()
+            return choice
+        return None
+
+
 def _log(msg: str) -> None:
     try:
         LOG_DIR.mkdir(exist_ok=True)
@@ -235,19 +338,73 @@ def main() -> None:
 
     server = Server()
     system_output = SystemOutput()
+    controls = BootControls()
     window = webview.create_window(
-        WINDOW_TITLE, html=SPLASH, width=1120, height=780, min_size=(760, 560), background_color="#f4f5f8"
+        WINDOW_TITLE, html=SPLASH, width=1120, height=780, min_size=(760, 560), background_color="#f4f5f8",
+        js_api=controls,
     )
 
+    def status(title: str, detail: str = "", warn: bool = False, buttons: list | None = None) -> None:
+        args = ", ".join(json.dumps(a, ensure_ascii=False) for a in (title, detail, warn, buttons or []))
+        try:
+            window.evaluate_js(f"vtStatus({args})")
+        except Exception:
+            pass
+
+    def wait_for_memory() -> None:
+        """Hold off starting the server while free commit memory is too low; continue by
+        itself once programs are closed, or right away if the user insists."""
+        controls.reset()
+        while not server._closing:
+            free = free_commit_gb()
+            if free is None or free >= SERVER_COMMIT_GB:
+                return
+            status(
+                "可用内存不足，暂缓启动",
+                f"当前剩余约 {free:.1f} GB，变声服务需要约 {SERVER_COMMIT_GB:.0f} GB。"
+                "请关闭一些程序（浏览器标签、ChatGPT、VS Code 等），内存够了会自动继续。",
+                warn=True, buttons=[["仍然启动", "start_anyway"]],
+            )
+            if controls.wait(2.0) == "start_anyway":
+                return
+
     def boot() -> None:
-        server.ensure_running()
-        if server.wait_ready():
-            system_output.route_through_cable()
-            window.load_url(PANEL_URL)
-            threading.Thread(target=server.watch, name="vt-server-watch", daemon=True).start()
-        else:
-            msg = json.dumps(f"变声服务启动失败，请查看 {LOG_DIR / 'server-console.log'}")
-            window.evaluate_js(f"document.getElementById('t').textContent = {msg}")
+        while not server._closing:
+            if not server_alive():
+                wait_for_memory()
+                status("正在启动变声服务…", "通常需要 20–40 秒，开机后首次打开会更久")
+            server.ensure_running()
+            if not server.wait_ready():
+                if server._closing:
+                    return
+                status("变声服务启动失败", f"详情见 {server.LOG}", warn=True, buttons=[["重试", "retry"]])
+            else:
+                reason = model_load_failure(server.run_log())
+                if reason is None:
+                    system_output.route_through_cable()
+                    window.load_url(PANEL_URL)
+                    threading.Thread(target=server.watch, name="vt-server-watch", daemon=True).start()
+                    return
+                _log(f"voice model failed to load ({reason})")
+                if reason == "memory":
+                    detail = ("内存不够，声音模型没有加载上，现在打开面板也无法变声。请关闭一些程序后点「重试」。"
+                              "如果经常这样，建议把 Windows 虚拟内存（页面文件）调大到 16 GB 或「系统管理的大小」。")
+                else:
+                    detail = f"声音模型没有加载上，现在打开面板也无法变声。详情见 {server.LOG}"
+                status("声音模型加载失败", detail, warn=True,
+                       buttons=[["重试", "retry"], ["仍然打开面板", "open_anyway"]])
+            controls.reset()
+            choice = None
+            while choice is None and not server._closing:
+                choice = controls.wait(1.0)
+            if choice == "open_anyway":
+                system_output.route_through_cable()
+                window.load_url(PANEL_URL)
+                threading.Thread(target=server.watch, name="vt-server-watch", daemon=True).start()
+                return
+            # retry: drop the broken server and start over
+            status("正在重新启动变声服务…", "正在关闭上一次的服务")
+            server.stop()
 
     # Clean up on the main thread once the window is gone. Not via window.events.closed:
     # pywebview runs that handler on a daemon thread, which is killed as soon as the
