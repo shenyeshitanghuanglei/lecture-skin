@@ -39,7 +39,7 @@ cd lecture-skin
 
 1. **新手引导一键准备**。双击 `一键安装.bat`（或直接双击 `声音面板.bat`，缺少环境时会自动拉起引导），它会自动检查并安装缺失的 uv、Python 3.12 和依赖（首次依赖下载约 3 GB，需要访问 PyPI 和 PyTorch 下载站），并协助打开虚拟声卡下载页。已有 uv 可在仓库目录运行 `uv sync --locked`。
 2. **装虚拟声卡**。从 [VB-CABLE 官网](https://vb-audio.com/Cable/) 下载安装，安装需要管理员权限，完成后重启 Windows。
-3. **启动声音面板与图形化新手引导**。双击 `声音面板.bat`。首次启动会从 Hugging Face 和 GitHub 下载基础推理权重；进入面板后会自动弹出「新手引导」（支持随时从左下角重新打开），带你复检 Python / uv / 虚拟声卡并完成 3 步功能教学。面板也可在浏览器打开，地址为 `http://127.0.0.1:18888/panel/`。
+3. **启动声音面板与图形化新手引导**。双击 `声音面板.bat`。首次启动会从 Hugging Face 和 GitHub 下载基础推理权重；进入面板后会自动弹出「新手引导」（之后可随时点左侧栏底部的「新手引导」重新打开），共 3 步：环境检查（Python / uv）、虚拟声卡、功能教学。面板也可在浏览器打开，地址为 `http://127.0.0.1:18888/panel/`。
 4. **接好声音**。在 Windows 音量合成器里，把正在播放网课的浏览器输出设为 **CABLE Input**，系统默认输出保持耳机或音箱。面板的「设置」页输入选 **CABLE Output**，输出选**跟随系统默认输出**。
 5. **导入并试听**。进入「声音库」导入你有权使用的 RVC 模型，点「使用」。回到主页点「开始变声」，播放一段讲话，确认输入音量有变化并能从耳机或音箱听到变声。退出后可把浏览器输出切回默认设备。
 
@@ -54,9 +54,10 @@ cd lecture-skin
 | 现象 | 检查 |
 | --- | --- |
 | 双击面板没启动 | 先确认安装步骤完成，并检查 WebView2 Runtime。查看 `logs/server-console.log` 或用 `start.ps1` 看报错。 |
-| 卡在下载依赖或权重 | 确认能访问 PyPI、PyTorch 下载站、Hugging Face 和 GitHub。已配置代理时，可通过 `HTTPS_PROXY` 让安装和权重下载使用代理。 |
+| 卡在下载依赖或权重 | 确认能访问 PyPI、PyTorch 下载站、Hugging Face 和 GitHub。已配置代理时，可通过 `HTTPS_PROXY` 让安装和权重下载使用代理。无法访问 Hugging Face 时，可设置 `HF_ENDPOINT=https://hf-mirror.com` 改用镜像下载基础权重（文件仍会校验哈希）。 |
 | 启动后没声音 | 先播放视频，让浏览器出现在音量合成器里。确认浏览器输出接到 **CABLE Input**，面板从 **CABLE Output** 读取，输出接耳机或音箱。 |
 | 音频断续 | 在「设置」切换到「稳定」延迟档，再检查 NVIDIA 驱动、模型和设备选择。 |
+| 以上都解决不了 | 在「设置」点「导出诊断信息」，生成的 zip 包含版本、显卡和内存、日志和设置。到 [GitHub Issues](https://github.com/shenyeshitanghuanglei/lecture-skin/issues/new/choose) 按模板描述问题并附上该文件。 |
 
 ### 声音模型
 
